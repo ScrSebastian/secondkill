@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${goods.goodsName + ' - 商品详情'}">商品详情 - 秒杀系统</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #f4f7fb; color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; }
+        .page-header { align-items: center; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; min-height: 64px; padding: 0 max(24px, calc((100vw - 1080px) / 2)); }
+        .brand { color: #2563eb; font-size: 20px; font-weight: 800; letter-spacing: .04em; text-decoration: none; }
+        .user-info { color: #64748b; font-size: 14px; }
+        .user-info strong { color: #334155; }
+        main { margin: 0 auto; max-width: 1080px; padding: 30px 24px 64px; }
+        .back-link { color: #64748b; display: inline-block; font-size: 14px; margin-bottom: 20px; text-decoration: none; }
+        .back-link:hover { color: #2563eb; }
+        .goods-detail { background: #fff; border: 1px solid #e7edf5; border-radius: 18px; box-shadow: 0 12px 32px rgba(15, 23, 42, .06); display: grid; gap: 42px; grid-template-columns: minmax(280px, .9fr) minmax(0, 1.1fr); padding: 34px; }
+        .image-wrap { align-items: center; background: #f8fafc; border-radius: 14px; display: flex; justify-content: center; min-height: 390px; padding: 30px; }
+        .image-wrap img { max-height: 350px; max-width: 100%; object-fit: contain; }
+        .activity-badge { background: #fff1f2; border-radius: 999px; color: #e11d48; display: inline-block; font-size: 13px; font-weight: 700; margin-bottom: 14px; padding: 6px 11px; }
+        h1 { font-size: clamp(26px, 4vw, 36px); margin: 0 0 10px; }
+        .subtitle { color: #64748b; line-height: 1.6; margin: 0 0 24px; }
+        .price-panel { background: #fff7f7; border-radius: 12px; margin: 22px 0; padding: 18px 20px; }
+        .price-label { color: #64748b; font-size: 13px; margin-bottom: 6px; }
+        .price { color: #e11d48; font-size: 34px; font-weight: 800; }
+        .price small { font-size: 17px; margin-right: 2px; }
+        .original-price { color: #94a3b8; font-size: 14px; margin-left: 10px; text-decoration: line-through; }
+        .normal-panel .price { color: #2563eb; }
+        .normal-panel { background: #eff6ff; }
+        .info-list { border-top: 1px solid #eef2f7; color: #64748b; font-size: 14px; line-height: 1.8; margin: 24px 0; padding-top: 18px; }
+        .info-list strong { color: #334155; font-weight: 700; }
+        .countdown { align-items: center; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 10px; color: #be123c; display: flex; font-size: 14px; justify-content: space-between; margin: 18px 0; padding: 12px 14px; }
+        .countdown strong { font-size: 17px; letter-spacing: .03em; }
+        .countdown.ended { background: #f1f5f9; border-color: #cbd5e1; color: #64748b; }
+        .detail-text { border-top: 1px solid #eef2f7; color: #475569; line-height: 1.8; margin-top: 26px; padding-top: 22px; }
+        .detail-text h2 { color: #1f2937; font-size: 18px; margin: 0 0 8px; }
+        .seckill-button { background: #e11d48; border: 0; border-radius: 9px; color: #fff; cursor: pointer; font-size: 16px; font-weight: 700; margin-top: 8px; padding: 13px 20px; transition: background .2s ease, transform .2s ease; width: 100%; }
+        .seckill-button:hover:not(:disabled) { background: #be123c; transform: translateY(-1px); }
+        .seckill-button:disabled, .seckill-button.normal { background: #94a3b8; cursor: not-allowed; }
+        .seckill-form { margin: 0; }
+        .hint { color: #94a3b8; font-size: 12px; margin: 9px 0 0; text-align: center; }
+        .async-status { align-items: center; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; color: #1d4ed8; display: none; gap: 12px; margin-top: 14px; padding: 13px 14px; }
+        .async-status.visible { display: flex; }
+        .async-status.error { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+        .async-status.success { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+        .async-icon { align-items: center; border: 2px solid currentColor; border-radius: 50%; display: flex; flex: 0 0 28px; height: 28px; justify-content: center; width: 28px; }
+        .async-status.processing .async-icon { animation: spin .9s linear infinite; border-right-color: transparent; }
+        .async-status.processing .async-icon::before { content: ''; }
+        .async-title { display: block; font-size: 14px; font-weight: 700; }
+        .async-detail { display: block; font-size: 12px; line-height: 1.5; margin-top: 2px; opacity: .8; }
+        .retry-query { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: 12px; font-weight: 700; margin-left: auto; padding: 6px; text-decoration: underline; }
+        .hidden { display: none !important; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 760px) { .page-header { padding: 0 18px; } main { padding: 24px 18px 44px; } .goods-detail { gap: 26px; grid-template-columns: 1fr; padding: 20px; } .image-wrap { min-height: 280px; } .image-wrap img { max-height: 250px; } }
+    </style>
+</head>
+<body>
+<header class="page-header">
+    <a class="brand" th:href="@{/goods/toList}">秒杀系统</a>
+    <div class="user-info">欢迎你，<strong th:text="${user != null ? user.nickname : '用户'}">用户</strong></div>
+</header>
+<main>
+    <a class="back-link" th:href="@{/goods/toList}">← 返回商品列表</a>
+    <article class="goods-detail">
+        <div class="image-wrap">
+            <img th:src="${goods.goodsImg}" th:alt="${goods.goodsName}">
+        </div>
+        <div>
+            <span class="activity-badge" th:if="${goods.seckillPrice != null}">限时秒杀</span>
+            <span class="activity-badge" style="background: #eff6ff; color: #2563eb;" th:if="${goods.seckillPrice == null}">普通商品</span>
+            <h1 th:text="${goods.goodsName}">商品名称</h1>
+            <p class="subtitle" th:text="${goods.goodsTitle}">商品标题</p>
+
+            <section class="price-panel" th:if="${goods.seckillPrice != null}">
+                <div class="price-label">秒杀价</div>
+                <div class="price"><small>¥</small><span th:text="${#numbers.formatDecimal(goods.seckillPrice, 1, 2)}">0.00</span><span class="original-price" th:text="${'原价 ¥' + #numbers.formatDecimal(goods.goodsPrice, 1, 2)}">原价 ¥0.00</span></div>
+            </section>
+            <section class="price-panel normal-panel" th:if="${goods.seckillPrice == null}">
+                <div class="price-label">商品售价</div>
+                <div class="price"><small>¥</small><span th:text="${#numbers.formatDecimal(goods.goodsPrice, 1, 2)}">0.00</span></div>
+            </section>
+
+            <div class="info-list" th:if="${goods.seckillPrice != null}">
+                秒杀库存：<strong th:text="${goods.stockCount + ' 件'}">0 件</strong><br>
+                开始时间：<strong th:text="${goods.startDate}">开始时间</strong><br>
+                结束时间：<strong th:text="${goods.endDate}">结束时间</strong>
+            </div>
+            <div class="countdown" id="seckill-countdown" th:if="${goods.seckillPrice != null}">
+                <span id="countdown-label">活动倒计时</span>
+                <strong id="countdown-value">加载中…</strong>
+            </div>
+            <div class="info-list" th:if="${goods.seckillPrice == null}">
+                商品库存：<strong th:text="${goods.goodsStock != null and goods.goodsStock == -1 ? '不限量' : goods.goodsStock + ' 件'}">0 件</strong><br>
+                当前商品暂未参与秒杀活动。
+            </div>
+
+            <form class="seckill-form" id="seckill-form" method="post" th:if="${goods.seckillPrice != null}">
+                <input name="goodsId" type="hidden" th:value="${goods.id}">
+                <button class="seckill-button" id="seckill-button" type="submit"
+                        th:disabled="${secKillStatus != 1}"
+                        th:text="${secKillStatus == 0 ? '秒杀未开始' : (secKillStatus == 1 ? '立即秒杀' : '秒杀已结束')}">秒杀未开始</button>
+            </form>
+            <button class="seckill-button normal" type="button" disabled th:if="${goods.seckillPrice == null}">暂未参与秒杀</button>
+            <p class="hint" id="seckill-message">提交后系统将异步创建订单，请勿重复提交。</p>
+            <div class="async-status" id="async-status" role="status" aria-live="polite">
+                <span class="async-icon" id="async-icon" aria-hidden="true"></span>
+                <span>
+                    <strong class="async-title" id="async-title">请求处理中</strong>
+                    <span class="async-detail" id="async-detail">正在等待秒杀结果…</span>
+                </span>
+                <button class="retry-query hidden" id="retry-query" type="button">重新查询</button>
+            </div>
+
+            <section class="detail-text">
+                <h2>商品详情</h2>
+                <p th:text="${goods.goodsDetail}">商品详情</p>
+            </section>
+        </div>
+    </article>
+</main>
+<script th:inline="javascript">
+    (function () {
+        const countdown = document.getElementById('seckill-countdown');
+        if (!countdown) {
+            return;
+        }
+
+        const label = document.getElementById('countdown-label');
+        const value = document.getElementById('countdown-value');
+        const secKillStatus = /*[[${secKillStatus}]]*/ 2;
+        let remainSeconds = /*[[${remainSeconds}]]*/ -1;
+        const formatRemaining = function (totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        };
+        const updateCountdown = function () {
+            if (secKillStatus === 0) {
+                label.textContent = '距离开始';
+                value.textContent = formatRemaining(Math.max(0, remainSeconds));
+                remainSeconds -= 1;
+                if (remainSeconds < 0) {
+                    window.location.reload();
+                    return false;
+                }
+                return true;
+            }
+            if (secKillStatus === 1) {
+                label.textContent = '活动状态';
+                value.textContent = '秒杀进行中';
+                return false;
+            }
+            label.textContent = '活动状态';
+            value.textContent = '已结束';
+            countdown.classList.add('ended');
+            return false;
+        };
+        if (updateCountdown()) {
+            const timer = window.setInterval(function () {
+                if (!updateCountdown()) {
+                    window.clearInterval(timer);
+                }
+            }, 1000);
+        }
+    })();
+</script>
+<script>
+    (function () {
+        const form = document.getElementById('seckill-form');
+        if (!form) {
+            return;
+        }
+
+        const button = document.getElementById('seckill-button');
+        const message = document.getElementById('seckill-message');
+        const statusPanel = document.getElementById('async-status');
+        const statusIcon = document.getElementById('async-icon');
+        const statusTitle = document.getElementById('async-title');
+        const statusDetail = document.getElementById('async-detail');
+        const retryQuery = document.getElementById('retry-query');
+        const goodsId = form.querySelector('[name="goodsId"]').value;
+        const maxPollAttempts = 60;
+        let pollTimer = null;
+        let pollAttempts = 0;
+        let consecutiveErrors = 0;
+
+        function updateStatus(type, title, detail) {
+            statusPanel.className = 'async-status visible ' + type;
+            statusTitle.textContent = title;
+            statusDetail.textContent = detail;
+            statusIcon.textContent = type === 'success' ? '✓' : (type === 'error' ? '!' : '');
+        }
+
+        function redirectToFailure(reason) {
+            window.location.href = '/secKill/toFail?reason=' + encodeURIComponent(reason || '秒杀失败，商品可能已售罄');
+        }
+
+        function scheduleNextPoll() {
+            window.clearTimeout(pollTimer);
+            const delay = Math.min(1000 + pollAttempts * 100, 3000);
+            pollTimer = window.setTimeout(queryResult, delay);
+        }
+
+        function postForm(url, values) {
+            return fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body: new URLSearchParams(values)
+            }).then(function (response) {
+                if (!response.ok) {
+                    throw new Error('请求失败，请稍后重试');
+                }
+                return response.json();
+            });
+        }
+
+        function queryResult() {
+            retryQuery.classList.add('hidden');
+            updateStatus('processing', '正在排队处理', 'RabbitMQ 已接收请求，正在异步创建订单…');
+
+            fetch('/secKill/result?goodsId=' + encodeURIComponent(goodsId), {
+                method: 'GET',
+                cache: 'no-store',
+                headers: {'Accept': 'application/json'}
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('状态查询请求失败');
+                    }
+                    return response.json();
+                })
+                .then(function (result) {
+                    if (result.code === 500210) {
+                        window.location.href = '/login/toLogin';
+                        return;
+                    }
+                    if (result.code !== 200) {
+                        throw new Error(result.message || '状态查询失败');
+                    }
+
+                    consecutiveErrors = 0;
+                    const orderResult = Number(result.data);
+                    if (orderResult > 0) {
+                        updateStatus('success', '秒杀成功', '订单已创建，正在跳转到订单详情…');
+                        button.textContent = '秒杀成功';
+                        window.setTimeout(function () {
+                            window.location.href = '/order/toDetail?orderId=' + encodeURIComponent(orderResult);
+                        }, 500);
+                        return;
+                    }
+                    if (orderResult === -1) {
+                        redirectToFailure('商品库存不足，本次秒杀未成功');
+                        return;
+                    }
+                    if (orderResult === 0) {
+                        pollAttempts += 1;
+                        if (pollAttempts >= maxPollAttempts) {
+                            updateStatus('error', '处理时间较长', '请求仍在处理中，请稍后重新查询。');
+                            retryQuery.classList.remove('hidden');
+                            return;
+                        }
+                        scheduleNextPoll();
+                        return;
+                    }
+                    throw new Error('无法识别的秒杀状态');
+                })
+                .catch(function (error) {
+                    consecutiveErrors += 1;
+                    if (consecutiveErrors < 3) {
+                        scheduleNextPoll();
+                        return;
+                    }
+                    updateStatus('error', '暂时无法查询结果', error.message + '，订单仍可能正在处理中。');
+                    retryQuery.classList.remove('hidden');
+                });
+        }
+
+        retryQuery.addEventListener('click', function () {
+            consecutiveErrors = 0;
+            pollAttempts = 0;
+            queryResult();
+        });
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            button.disabled = true;
+            pollAttempts = 0;
+            button.textContent = '正在提交…';
+            message.textContent = '正在将请求发送到秒杀队列…';
+            updateStatus('processing', '正在提交请求', '请稍候，不要关闭页面或重复点击。');
+
+            postForm('/secKill/path', {goodsId: goodsId})
+                .then(function (pathResult) {
+                    if (pathResult.code === 500210) {
+                        window.location.href = '/login/toLogin';
+                        throw new Error('登录状态已失效');
+                    }
+                    if (pathResult.code !== 200 || !pathResult.data) {
+                        throw new Error(pathResult.message || '无法获取秒杀资格');
+                    }
+                    const dynamicUrl = '/secKill/' + encodeURIComponent(pathResult.data) + '/doSecKill';
+                    return postForm(dynamicUrl, {goodsId: goodsId});
+                })
+                .then(function (submitResult) {
+                    if (!submitResult) {
+                        return;
+                    }
+                    if (submitResult.code === 500210) {
+                        window.location.href = '/login/toLogin';
+                        return;
+                    }
+                    if (submitResult.code !== 200) {
+                        redirectToFailure(submitResult.message || '秒杀请求提交失败');
+                        return;
+                    }
+                    button.textContent = '排队处理中';
+                    message.textContent = '请求已进入队列，页面会自动查询处理结果。';
+                    queryResult();
+                })
+                .catch(function (error) {
+                    updateStatus('error', '提交失败', error.message);
+                    message.textContent = error.message;
+                    button.textContent = '重新秒杀';
+                    button.disabled = false;
+                });
+        });
+
+        window.addEventListener('beforeunload', function () {
+            window.clearTimeout(pollTimer);
+        });
+    })();
+</script>
+</body>
+</html>

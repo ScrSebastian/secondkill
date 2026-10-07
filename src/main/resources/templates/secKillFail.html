@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>秒杀失败 - 秒杀系统</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { align-items: center; background: #f4f7fb; color: #1f2937; display: flex; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; justify-content: center; margin: 0; min-height: 100vh; padding: 24px; }
+        .card { background: #fff; border: 1px solid #e7edf5; border-radius: 18px; box-shadow: 0 16px 38px rgba(15, 23, 42, .08); max-width: 480px; padding: 42px 32px; text-align: center; width: 100%; }
+        .icon { align-items: center; background: #fff1f2; border-radius: 50%; color: #e11d48; display: inline-flex; font-size: 30px; height: 58px; justify-content: center; width: 58px; }
+        h1 { font-size: 24px; margin: 18px 0 10px; }
+        p { color: #64748b; line-height: 1.7; margin: 0; }
+        .reason { background: #fff7f7; border-radius: 9px; color: #be123c; font-size: 14px; margin: 22px 0; padding: 12px; }
+        a { background: #2563eb; border-radius: 8px; color: #fff; display: inline-block; font-size: 15px; font-weight: 700; padding: 11px 18px; text-decoration: none; }
+    </style>
+</head>
+<body>
+<main class="card">
+    <div class="icon">!</div>
+    <h1>秒杀失败</h1>
+    <p>本次秒杀订单未能创建，请查看失败原因后重试。</p>
+    <div class="reason" id="failure-reason" th:text="${errMsg != null ? errMsg : '系统繁忙，请稍后重试'}">失败原因</div>
+    <a th:href="@{/goods/toList}">返回商品列表</a>
+</main>
+<script>
+    (function () {
+        const reason = new URLSearchParams(window.location.search).get('reason');
+        if (reason) {
+            document.getElementById('failure-reason').textContent = reason;
+        }
+    })();
+</script>
+</body>
+</html>

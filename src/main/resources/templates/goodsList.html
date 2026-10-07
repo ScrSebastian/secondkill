@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>秒杀商品 - 秒杀系统</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            background: #f4f7fb;
+            color: #1f2937;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            margin: 0;
+        }
+
+        .page-header {
+            align-items: center;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            min-height: 64px;
+            padding: 0 max(24px, calc((100vw - 1120px) / 2));
+        }
+
+        .brand { color: #2563eb; font-size: 20px; font-weight: 800; letter-spacing: .04em; }
+        .user-info { color: #64748b; font-size: 14px; }
+        .user-info strong { color: #334155; }
+
+        main { margin: 0 auto; max-width: 1120px; padding: 42px 24px 64px; }
+        .hero { margin-bottom: 28px; }
+        h1 { font-size: clamp(26px, 4vw, 34px); margin: 0 0 10px; }
+        .description { color: #64748b; margin: 0; }
+
+        .section-title { align-items: center; display: flex; justify-content: space-between; margin-bottom: 16px; }
+        .section-title h2 { font-size: 18px; margin: 0; }
+        .badge { background: #fff1f2; border-radius: 999px; color: #e11d48; font-size: 13px; font-weight: 700; padding: 6px 11px; }
+
+        .goods-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+        .goods-item {
+            background: #ffffff;
+            border: 1px solid #e7edf5;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+            overflow: hidden;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .goods-item:hover { box-shadow: 0 16px 30px rgba(37, 99, 235, .12); transform: translateY(-3px); }
+
+        .image-wrap { background: #f8fafc; height: 210px; padding: 18px; }
+        .image-wrap img { height: 100%; object-fit: contain; width: 100%; }
+        .goods-content { padding: 18px; }
+        .goods-title { font-size: 17px; margin: 0 0 7px; }
+        .goods-subtitle { color: #64748b; font-size: 13px; height: 20px; margin: 0 0 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .price-row { align-items: flex-end; display: flex; gap: 10px; margin-bottom: 16px; }
+        .seckill-price { color: #e11d48; font-size: 25px; font-weight: 800; line-height: 1; }
+        .seckill-price small { font-size: 14px; margin-right: 2px; }
+        .original-price { color: #94a3b8; font-size: 13px; text-decoration: line-through; }
+
+        .meta { border-top: 1px solid #eef2f7; color: #64748b; font-size: 13px; line-height: 1.65; padding-top: 13px; }
+        .meta span { color: #334155; font-weight: 600; }
+        .detail-link { color: #2563eb; display: inline-block; font-size: 14px; font-weight: 700; margin-top: 16px; text-decoration: none; }
+        .detail-link:hover { text-decoration: underline; }
+
+        .empty-state {
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 16px;
+            color: #64748b;
+            line-height: 1.8;
+            padding: 58px 24px;
+            text-align: center;
+        }
+        .empty-state strong { color: #334155; display: block; font-size: 17px; margin-bottom: 6px; }
+
+        @media (max-width: 600px) {
+            .page-header { padding: 0 18px; }
+            .user-info { max-width: 52%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            main { padding: 30px 18px 48px; }
+        }
+    </style>
+</head>
+<body>
+<header class="page-header">
+    <div class="brand">秒杀系统</div>
+    <div class="user-info">
+        欢迎你，<strong th:text="${user != null ? user.nickname : '游客'}">用户</strong>
+        <span th:if="${user != null}" th:text="${'（' + user.id + '）'}">（用户 ID）</span>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <h1>商品列表</h1>
+        <p class="description">浏览全部商品，参与限时秒杀活动。</p>
+    </section>
+
+    <section>
+        <div class="section-title">
+            <h2>全部商品</h2>
+            <span class="badge" th:text="${goodsList != null ? #lists.size(goodsList) + ' 件商品' : '0 件商品'}">0 件商品</span>
+        </div>
+
+        <div class="goods-grid" th:if="${goodsList != null and !#lists.isEmpty(goodsList)}">
+            <article class="goods-item" th:each="goods : ${goodsList}">
+                <div class="image-wrap">
+                    <img th:src="${goods.goodsImg}" th:alt="${goods.goodsName}">
+                </div>
+                <div class="goods-content">
+                    <h3 class="goods-title" th:text="${goods.goodsName}">商品名称</h3>
+                    <p class="goods-subtitle" th:text="${goods.goodsTitle}">商品标题</p>
+                    <div class="price-row" th:if="${goods.seckillPrice != null}">
+                        <div class="seckill-price">
+                            <small>¥</small><span th:text="${#numbers.formatDecimal(goods.seckillPrice, 1, 2)}">0.00</span>
+                        </div>
+                        <span class="original-price" th:text="${'原价 ¥' + #numbers.formatDecimal(goods.goodsPrice, 1, 2)}">原价 ¥0.00</span>
+                    </div>
+                    <div class="price-row" th:if="${goods.seckillPrice == null}">
+                        <div class="seckill-price" style="color: #2563eb;">
+                            <small>¥</small><span th:text="${#numbers.formatDecimal(goods.goodsPrice, 1, 2)}">0.00</span>
+                        </div>
+                    </div>
+                    <div class="meta" th:if="${goods.seckillPrice != null}">
+                        剩余库存：<span th:text="${goods.stockCount}">0</span> 件<br>
+                        活动时间：<span th:text="${goods.startDate + ' 至 ' + goods.endDate}">开始时间 至 结束时间</span>
+                    </div>
+                    <div class="meta" th:if="${goods.seckillPrice == null}">
+                        商品库存：<span th:text="${goods.goodsStock != null and goods.goodsStock == -1 ? '不限量' : goods.goodsStock + ' 件'}">0 件</span><br>
+                        暂未参与秒杀活动
+                    </div>
+                    <a class="detail-link" th:href="@{/goods/toDetail/{id}(id=${goods.id})}">查看商品详情 →</a>
+                </div>
+            </article>
+        </div>
+
+        <div class="empty-state" th:if="${goodsList == null or #lists.isEmpty(goodsList)}">
+            <strong>暂无商品</strong>
+            商品上架后会在这里展示。
+        </div>
+    </section>
+</main>
+</body>
+</html>

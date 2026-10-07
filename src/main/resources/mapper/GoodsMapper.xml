@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xxxx.secondkill.mapper.GoodsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.xxxx.secondkill.pojo.Goods">
+        <id column="id" property="id" />
+        <result column="goods_name" property="goodsName" />
+        <result column="goods_title" property="goodsTitle" />
+        <result column="goods_img" property="goodsImg" />
+        <result column="goods_detail" property="goodsDetail" />
+        <result column="goods_price" property="goodsPrice" />
+        <result column="goods_stock" property="goodsStock" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, goods_name, goods_title, goods_img, goods_detail, goods_price, goods_stock
+    </sql>
+
+    <resultMap id="GoodsVoResultMap" type="com.xxxx.secondkill.vo.GoodsVo" extends="BaseResultMap">
+        <result column="seckill_price" property="seckillPrice" />
+        <result column="stock_count" property="stockCount" />
+        <result column="start_date" property="startDate" />
+        <result column="end_date" property="endDate" />
+    </resultMap>
+
+    <select id="findGoodsVo" resultMap="GoodsVoResultMap">
+        SELECT
+            g.id, g.goods_name, g.goods_title, g.goods_img, g.goods_detail, g.goods_price, g.goods_stock,
+            sg.seckill_price, sg.stock_count, sg.start_date, sg.end_date
+        FROM goods g
+        LEFT JOIN t_seckill_goods sg ON sg.goods_id = g.id
+    </select>
+
+    <select id="findGoodsVoByGoodsId" resultMap="GoodsVoResultMap">
+        SELECT
+            g.id, g.goods_name, g.goods_title, g.goods_img, g.goods_detail, g.goods_price, g.goods_stock,
+            sg.seckill_price, sg.stock_count, sg.start_date, sg.end_date
+        FROM goods g
+        LEFT JOIN t_seckill_goods sg ON sg.goods_id = g.id
+        WHERE g.id = #{goodsId}
+    </select>
+
+</mapper>
